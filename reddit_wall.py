@@ -10,6 +10,8 @@ import threading
 reddit_url = 'http://www.reddit.com/r/wallpapers/top/.json'
 ext = ['jpg', 'png']
 wallpaper_home = os.getenv('HOME')+'/wallpapers'
+#the change will occurs after every 'next_change' seconds
+next_change = 10 
 
 class create_index(threading.Thread):
     def run(self):
@@ -25,7 +27,7 @@ class create_index(threading.Thread):
                         subprocess.call(['wget', '--directory-prefix',wallpaper_home, url])
                         change = True
             if not change:
-                print "Fetching suspended for 5hrs"
+                print 'Fetching suspended for 5hrs'
                 time.sleep(3600*5)
 
 
@@ -38,14 +40,16 @@ def change():
             if os.path.exists(wallpaper):
                 client.set_string('/desktop/gnome/background/picture_filename', wallpaper)
                 print 'Wallpaper Changed'
-                print "Next change in 1hr"
-                time.sleep(3600)
+                print 'Next change in '+str(next_change)+'s'
+                time.sleep(next_change)
             else:
-                print "Waiting for new wallpapers"
+                print 'Waiting for new wallpapers'
                 time.sleep(20)
 
 
 if __name__ == "__main__":
+    if not os.path.exists(wallpaper_home):
+        os.mkdir(wallpaper_home)
     create_index().start()
     change()
     sys.exit()
