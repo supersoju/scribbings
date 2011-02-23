@@ -13,6 +13,24 @@ wallpaper_home = os.getenv('HOME')+'/wallpapers'
 #the change will occurs after every 'next_change' seconds
 next_change = 10 
 
+def setter_gnome():
+    client = gconf.client_get_default()
+    return lambda wallpaper: client.set_string('/desktop/gnome/background/picture_filename', wallpaper)
+
+def setter_feh():
+    import os
+    return lambda wallpaper: os.system("feh --bg-center %s" % wallpaper)
+
+#ugly dispatch table
+#initializes the setter before returning it
+def get_setter(name):
+    try:
+        return {"gnome": setter_gnome,
+                "feh":   setter_feh   }[name]()
+    except KeyError:
+        print "No such setter"
+        raise   
+
 class create_index(threading.Thread):
     def run(self):
         while(True):
@@ -31,14 +49,13 @@ class create_index(threading.Thread):
                 time.sleep(3600*5)
 
 
-def change():
+def change(setter):
     while(True):
         ls = os.listdir(wallpaper_home)
-        client = gconf.client_get_default()
         for i in range(0, int(len(ls))):
             wallpaper = wallpaper_home +'/'+ls[i]
             if os.path.exists(wallpaper):
-                client.set_string('/desktop/gnome/background/picture_filename', wallpaper)
+                setter(wallpaper)
                 print 'Wallpaper Changed'
                 print 'Next change in '+str(next_change)+'s'
                 time.sleep(next_change)
@@ -48,8 +65,14 @@ def change():
 
 
 if __name__ == "__main__":
+    from optparse import OptionParser
+    args = OptionParser()
+    args.add_option("-s", "--setter", default="gnome")
+    (options, args) = args.parse_args()
+    setter = get_setter(options.setter)
+
     if not os.path.exists(wallpaper_home):
-        os.mkdir(wallpaper_home)
+        os.mkdir(wallpaper_home)    
     create_index().start()
-    change()
+    change(setter)
     sys.exit()
