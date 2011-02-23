@@ -38,7 +38,8 @@ def change():
             if os.path.exists(wallpaper):
                 client.set_string('/desktop/gnome/background/picture_filename', wallpaper)
                 print 'Wallpaper Changed'
-                time.sleep(10)
+                print "Next change in 1hr"
+                time.sleep(3600)
             else:
                 print "Waiting for new wallpapers"
                 time.sleep(20)
