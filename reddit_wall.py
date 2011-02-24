@@ -32,6 +32,13 @@ def get_setter(name):
         raise   
 
 class create_index(threading.Thread):
+    def __init__(self):
+        super(create_index, self).__init__()
+        self._stop = threading.Event()
+
+    def stop(self):
+        self._stop.set()
+
     def run(self):
         while(True):
             change = False
@@ -46,8 +53,9 @@ class create_index(threading.Thread):
                         change = True
             if not change:
                 print 'Fetching suspended for 5hrs'
-                time.sleep(3600*5)
-
+                self._stop.wait(3600*5)
+                if(self._stop.is_set()):
+                    return
 
 def change(setter):
     while(True):
@@ -73,6 +81,9 @@ if __name__ == "__main__":
 
     if not os.path.exists(wallpaper_home):
         os.mkdir(wallpaper_home)    
-    create_index().start()
-    change(setter)
-    sys.exit()
+    indexer = create_index()
+    indexer.start()
+    try:
+        change(setter)
+    except KeyboardInterrupt:
+        indexer.stop()
